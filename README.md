@@ -1,14 +1,14 @@
 # Systemd
 Create units
-1.Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова
+# 1.Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова
 
 #Для начала создаём файл с конфигурацией для сервиса в директории /etc/default - из неё сервис будет брать необходимые переменные.
 
 nano /etc/default/watchlog
-# Configuration file for my watchlog service
-# Place it to /etc/default
+#Configuration file for my watchlog service
+#Place it to /etc/default
 
-# File and word in that file that we will be monit
+#File and word in that file that we will be monit
 WORD="ALERT"
 LOG=/var/log/watchlog.log
 
@@ -53,7 +53,7 @@ Enter
 Description=Run watchlog script every 30 second
 
 [Timer]
-# Run every 30 second
+#Run every 30 second
 OnUnitActiveSec=30 
 #OnCalendar=*:*:0/30 - не тебует ручного запуска сервиса
 Unit=watchlog.service
@@ -76,7 +76,7 @@ tail -n 1000 /var/log/syslog  | grep word
 
 _______________________________________________
 
-2.Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта
+# 2.Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта
 
 #FastCGI — это протокол для взаимодействия веб-сервера с приложениями (например, PHP). В отличие от обычного CGI, который создает новый процесс на каждый запрос, FastCGI процессы постоянно #запущены и обрабатывают запросы многократно, что значительно быстрее.
 #spawn-fcgi — это утилита, которая:
@@ -101,12 +101,10 @@ mkdir /etc/spawn-fcgi
 touch /etc/spawn-fcgi/fcgi.conf
 cat > /etc/spawn-fcgi/fcgi.conf
 Enter
-# You must set some working options before the "spawn-fcgi" service will work.
-# If SOCKET points to a file, then this file is cleaned up by the init script.
-#
-# See spawn-fcgi(1) for all possible options.
-#
-# Example :
+#You must set some working options before the "spawn-fcgi" service will work.
+#If SOCKET points to a file, then this file is cleaned up by the init script.
+#See spawn-fcgi(1) for all possible options.
+
 SOCKET=/var/run/php-fcgi.sock
 OPTIONS="-u www-data -g www-data -s $SOCKET -S -M 0600 -C 32 -F 1 -- /usr/bin/php-cgi"
 Ctrl+D
@@ -136,7 +134,7 @@ systemctl start spawn-fcgi
 systemctl status spawn-fcgi
 
 _____________________________________
-3.Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно
+# 3.Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно
 
 #Ключевая идея: шаблон nginx@.service
 #Символ @ в имени файла (nginx@.service) превращает его в шаблон. Это позволяет запускать множество экземпляров (instance) одного и того же сервиса с разными параметрами.
@@ -150,16 +148,15 @@ apt install nginx -y
 #Для запуска нескольких экземпляров сервиса модифицируем исходный service для использования различной конфигурации, а также PID-файлов. Для этого создадим новый Unit для работы с шаблонами в /etc/systemd/system/nginx@.service, который переопределит системный файл /lib/systemd/system/nginx.service :
 cat > /etc/systemd/system/nginx@.service
 Enter
-# Stop dance for nginx
-# =======================
-# ExecStop sends SIGSTOP (graceful stop) to the nginx process.
-# If, after 5s (--retry QUIT/5) nginx is still running, systemd takes control
-# and sends SIGTERM (fast shutdown) to the main process.
-# After another 5s (TimeoutStopSec=5), and if nginx is alive, systemd sends
-# SIGKILL to all the remaining processes in the process group (KillMode=mixed).
-#
-# nginx signals reference doc:
-# http://nginx.org/en/docs/control.html
+#Stop dance for nginx
+#=======================
+#ExecStop sends SIGSTOP (graceful stop) to the nginx process.
+#If, after 5s (--retry QUIT/5) nginx is still running, systemd takes control
+#and sends SIGTERM (fast shutdown) to the main process.
+#After another 5s (TimeoutStopSec=5), and if nginx is alive, systemd sends
+#SIGKILL to all the remaining processes in the process group (KillMode=mixed).
+#nginx signals reference doc:
+#http://nginx.org/en/docs/control.html
 
 [Unit]
 Description=A high performance web server and a reverse proxy server
